@@ -64,7 +64,7 @@ const generateFromFiles = (data: string[] = [], requestWriteStream: WriteStream,
   });
 };
 
-const generateFromClients = (
+const generateFromClients = async (
   clients: string[] = [],
   requestWriteStream: WriteStream,
   isMultiFile: boolean,
@@ -83,19 +83,21 @@ const generateFromClients = (
         : undefined,
     });
 
-    clients.map((client, index) => {
-      console.log(LOG_MESSAGE.GETTING_FROM_REMOTE(index));
-      instance
-        .get(client)
-        .then((response) => {
-          console.log(LOG_MESSAGE.GENERATING);
-          codegen(response.data, requestWriteStream, isMultiFile, index + (data?.length ?? 0));
-          greenConsole(LOG_MESSAGE.REMOTE_SUCCESSFUL(index));
-        })
-        .catch((error) => {
-          redConsole(`${error.code}: ${ERROR_MESSAGES.FETCH_CLIENT_FAILED_ERROR}`);
-        });
-    });
+    await Promise.all(
+      clients.map((client, index) => {
+        console.log(LOG_MESSAGE.GETTING_FROM_REMOTE(index));
+        return instance
+          .get(client)
+          .then((response) => {
+            console.log(LOG_MESSAGE.GENERATING);
+            codegen(response.data, requestWriteStream, isMultiFile, index + (data?.length ?? 0));
+            greenConsole(LOG_MESSAGE.REMOTE_SUCCESSFUL(index));
+          })
+          .catch((error) => {
+            redConsole(`${error.code}: ${ERROR_MESSAGES.FETCH_CLIENT_FAILED_ERROR}`);
+          });
+      }),
+    );
   }
 };
 
@@ -126,7 +128,7 @@ const setupDirAndCreateWriteStream = (output: string, fileName = "request", file
 };
 
 getCodegenConfig().then(
-  ({ output = ".output", fileHeaders, timeout, data, clients, fileName, needRequestHook, needClient }) => {
+  async ({ output = ".output", fileHeaders, timeout, data, clients, fileName, needRequestHook, needClient }) => {
     if (!data && !clients) {
       redConsole(ERROR_MESSAGES.NO_CLIENTS_OR_DATA);
       return;
@@ -136,7 +138,7 @@ getCodegenConfig().then(
     const { requestFileWriteStream } = setupDirAndCreateWriteStream(output, fileName, fileHeaders);
 
     generateFromFiles(data, requestFileWriteStream, isMultiFile);
-    generateFromClients(clients, requestFileWriteStream, isMultiFile, timeout, data);
+    await generateFromClients(clients, requestFileWriteStream, isMultiFile, timeout, data);
 
     requestFileWriteStream.end();
 

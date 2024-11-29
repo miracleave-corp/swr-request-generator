@@ -821,7 +821,7 @@ var generateFromFiles = (data = [], requestWriteStream, isMultiFile) => {
     }
   });
 };
-var generateFromClients = (clients = [], requestWriteStream, isMultiFile, timeout, data) => {
+var generateFromClients = async (clients = [], requestWriteStream, isMultiFile, timeout, data) => {
   if (clients) {
     const options = import_commander.program.opts();
     const instance = import_axios.default.create({
@@ -830,16 +830,18 @@ var generateFromClients = (clients = [], requestWriteStream, isMultiFile, timeou
         Authorization: options.authorization
       } : void 0
     });
-    clients.map((client2, index) => {
-      console.log(LOG_MESSAGE.GETTING_FROM_REMOTE(index));
-      instance.get(client2).then((response) => {
-        console.log(LOG_MESSAGE.GENERATING);
-        codegen(response.data, requestWriteStream, isMultiFile, index + (data?.length ?? 0));
-        greenConsole(LOG_MESSAGE.REMOTE_SUCCESSFUL(index));
-      }).catch((error) => {
-        redConsole(`${error.code}: ${ERROR_MESSAGES.FETCH_CLIENT_FAILED_ERROR}`);
-      });
-    });
+    await Promise.all(
+      clients.map((client2, index) => {
+        console.log(LOG_MESSAGE.GETTING_FROM_REMOTE(index));
+        return instance.get(client2).then((response) => {
+          console.log(LOG_MESSAGE.GENERATING);
+          codegen(response.data, requestWriteStream, isMultiFile, index + (data?.length ?? 0));
+          greenConsole(LOG_MESSAGE.REMOTE_SUCCESSFUL(index));
+        }).catch((error) => {
+          redConsole(`${error.code}: ${ERROR_MESSAGES.FETCH_CLIENT_FAILED_ERROR}`);
+        });
+      })
+    );
   }
 };
 var setupDirAndCreateWriteStream = (output, fileName = "request", fileHeaders) => {
@@ -861,7 +863,7 @@ var setupDirAndCreateWriteStream = (output, fileName = "request", fileHeaders) =
   return { requestFileWriteStream };
 };
 getCodegenConfig().then(
-  ({ output = ".output", fileHeaders, timeout, data, clients, fileName, needRequestHook, needClient }) => {
+  async ({ output = ".output", fileHeaders, timeout, data, clients, fileName, needRequestHook, needClient }) => {
     if (!data && !clients) {
       redConsole(ERROR_MESSAGES.NO_CLIENTS_OR_DATA);
       return;
@@ -869,7 +871,7 @@ getCodegenConfig().then(
     const isMultiFile = (data?.length ?? 0) + (clients?.length ?? 0) > 1;
     const { requestFileWriteStream } = setupDirAndCreateWriteStream(output, fileName, fileHeaders);
     generateFromFiles(data, requestFileWriteStream, isMultiFile);
-    generateFromClients(clients, requestFileWriteStream, isMultiFile, timeout, data);
+    await generateFromClients(clients, requestFileWriteStream, isMultiFile, timeout, data);
     requestFileWriteStream.end();
     if (needRequestHook) {
       import_node_fs.default.writeFileSync(import_node_path.default.resolve(output, "./useGetRequest.ts"), prettifyCode(useGetRequest), "utf-8");
