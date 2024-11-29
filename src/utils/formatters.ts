@@ -44,9 +44,18 @@ export const toTypes = (definitions: ResolvedSchema) => {
       return `${convertKeyAndAddQuote(key)}: FormData`;
     }
 
-    return isObject(value)
-      ? `${convertKeyAndAddQuote(key)}: ${JSON.stringify(value).replace(/"/g, "")};`
-      : `${convertKeyAndAddQuote(key)}: ${(value as string).replace(ENUM_SUFFIX, "")};`;
+    // Handle object type definitions
+    if (isObject(value)) {
+      // Replace "integer" with "number"
+      const sanitizedValue = JSON.stringify(value).replace(/"integer"/g, '"number"');
+      return `${convertKeyAndAddQuote(key)}: ${sanitizedValue.replace(/"/g, "")};`;
+    }
+
+    // Handle string type definitions
+    const sanitizedType = (value as string)
+      .replace(ENUM_SUFFIX, "") // Remove ENUM suffix if present
+      .replace(/integer/g, "number"); // Replace "integer" with "number"
+    return `${convertKeyAndAddQuote(key)}: ${sanitizedType};`;
   });
 
   return (
