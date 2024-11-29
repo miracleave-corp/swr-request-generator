@@ -12,9 +12,6 @@ coverage/
 .code/
 wsEndpoint
 
-# build
-dist/
-
 # example folder
 /example/node_modules/
 /example/.DS_Store
