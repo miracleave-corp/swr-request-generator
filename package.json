@@ -1,6 +1,6 @@
 {
-  "name": "@openapi-integration/swr-request-generator",
-  "version": "1.2.2",
+  "name": "@miracleave-corp/swr-request-generator",
+  "version": "1.2.3",
   "type": "module",
   "description": "A tool for generating TypeScript code and interface from swagger by using SWR and axios as client.",
   "bin": {
@@ -18,17 +18,19 @@
     "test:cov": "vitest run --coverage",
     "lint": "eslint src",
     "build": "tsup",
-    "preversion": "pnpm run test && pnpm run lint && pnpm run build",
-    "release": "bumpp && pnpm publish"
+    "preversion": "pnpm run test && pnpm run lint && pnpm run build"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/teobler/swr-request-generator"
+    "url": "https://github.com/miracleave-corp/swr-request-generator"
   },
-  "author": "teobler",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "author": "miracleave-corp",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/teobler/swr-request-generator/issues"
+    "url": "https://github.com/miracleave-corp/swr-request-generator/issues"
   },
   "keywords": [
     "swr",
@@ -39,7 +41,7 @@
     "interface",
     "TypeScript"
   ],
-  "homepage": "https://github.com/teobler/swr-request-generator#readme",
+  "homepage": "https://github.com/miracleave-corp/swr-request-generator#readme",
   "devDependencies": {
     "@ts-stack/openapi-spec": "^3.1.5",
     "@types/js-yaml": "^4.0.5",
