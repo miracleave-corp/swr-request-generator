@@ -5,5 +5,5 @@ export default defineConfig({
   splitting: false,
   target: "node18",
   clean: true,
-  minify: true,
+  minify: false,
 });

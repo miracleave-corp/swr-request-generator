@@ -1,41 +1,684 @@
-"use strict";var Oe=Object.create;var G=Object.defineProperty;var be=Object.getOwnPropertyDescriptor;var Te=Object.getOwnPropertyNames;var qe=Object.getPrototypeOf,xe=Object.prototype.hasOwnProperty;var je=(r,e,t,s)=>{if(e&&typeof e=="object"||typeof e=="function")for(let o of Te(e))!xe.call(r,o)&&o!==t&&G(r,o,{get:()=>e[o],enumerable:!(s=be(e,o))||s.enumerable});return r};var $=(r,e,t)=>(t=r!=null?Oe(qe(r)):{},je(e||!r||!r.__esModule?G(t,"default",{value:r,enumerable:!0}):t,r));var f=$(require("fs"),1),he=$(require("js-yaml"),1);var ue=require("moderndash");var a=(r,e,t)=>{if(!r||!e)return t;let o=(Array.isArray(e)?e:e?.match(/([^[.\]])+/g))?.reduce((n,i)=>n&&n[i],r);return o===void 0?t:o},D=(r,e)=>!r||!e?!1:!!e?.match(/([^[.\]])+/g)?.reduce((s,o)=>s&&s[o],r),U=r=>(e,t)=>e[r]>t[r]?1:t[r]>e[r]?-1:0,H=(r,e)=>e.reduce((t,s)=>(r.hasOwnProperty(s)&&(t[s]=r[s]),t),{}),B=(r,e)=>{for(let t in r)if(e(r[t]))return r[t]},J=(r,e="\\s")=>r.replace(new RegExp(`^(.*?)([${e}]*)$`),"$1");var V=r=>Array.isArray(r),d=r=>Object.prototype.toString.call(r)==="[object Object]",z=r=>typeof r=="number",K=r=>!D(r,"$ref"),P=r=>!D(r,"$ref"),q=r=>/^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(r);var R=require("moderndash"),ee=$(require("prettier"),1);var S={INVALID_JSON_FILE_ERROR:`Your json file is invalid, please check it!
-`,INVALID_FILE_FORMAT:`Your input file is invalid, please check if it json or yaml!
-`,FETCH_CLIENT_FAILED_ERROR:`Fetch client failed! Please check your network or ts-codegen.config.ts file.
-`,NO_CLIENTS_OR_DATA:`You should provide at least one client or data file!
-`},h={GENERATING:"\u2604\uFE0F Generating...",SUCCESSFUL:`\u{1F973} All request data generated successful!!!
-`,LOCAL_SUCCESSFUL:r=>`\u2705  Request data generated successful from file${r+1}!!!
-`,READING_FROM_LOCAL:r=>`\u{1F453} Reading swagger schema from local file${r+1}...`,GETTING_FROM_REMOTE:r=>`\u{1F6DC} Getting swagger schema from client ${r+1}...`,REMOTE_SUCCESSFUL:r=>`\u2705  Request data generated successful from client${r+1}!!!
-`,MISSING_OPERATION_ID:"\u26A0\uFE0F Some of your request does not have an operation id, generated request method will not has an uniq name!"},Q=["get","post","put","delete","patch","options","head"],_="/",X=`
+"use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+
+// src/index.ts
+var import_node_fs = __toESM(require("fs"), 1);
+var yaml = __toESM(require("js-yaml"), 1);
+
+// src/resolvers/DefinitionsResolver.ts
+var import_moderndash3 = require("moderndash");
+
+// src/utils/lodash.ts
+var get = (obj, path2, defValue) => {
+  if (!obj || !path2) {
+    return defValue;
+  }
+  const pathArray = Array.isArray(path2) ? path2 : path2?.match(/([^[.\]])+/g);
+  const result = pathArray?.reduce((prevObj, key) => prevObj && prevObj[key], obj);
+  return result === void 0 ? defValue : result;
+};
+var has = (obj, path2) => {
+  if (!obj || !path2) {
+    return false;
+  }
+  const pathArray = path2?.match(/([^[.\]])+/g);
+  return !!pathArray?.reduce((prevObj, key) => prevObj && prevObj[key], obj);
+};
+var sortBy = (key) => {
+  return (a, b) => a[key] > b[key] ? 1 : b[key] > a[key] ? -1 : 0;
+};
+var pick = (object, keys) => {
+  return keys.reduce((res, key) => {
+    if (object.hasOwnProperty(key)) {
+      res[key] = object[key];
+    }
+    return res;
+  }, {});
+};
+var pickBy = (object, callback) => {
+  for (const key in object) {
+    if (callback(object[key])) {
+      return object[key];
+    }
+  }
+  return void 0;
+};
+var trimEnd = (str, c = "\\s") => str.replace(new RegExp(`^(.*?)([${c}]*)$`), "$1");
+
+// src/utils/specifications.ts
+var isArray = (data) => Array.isArray(data);
+var isObject = (data) => Object.prototype.toString.call(data) === "[object Object]";
+var isNumber = (data) => typeof data === "number";
+var isSchema = (schema) => !has(schema, "$ref");
+var isRequestBody = (requestBody) => !has(requestBody, "$ref");
+var isValidVariableName = (variableName) => /^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(variableName);
+
+// src/utils/formatters.ts
+var import_moderndash = require("moderndash");
+var import_prettier = __toESM(require("prettier"), 1);
+
+// src/constants.ts
+var ERROR_MESSAGES = {
+  INVALID_JSON_FILE_ERROR: "Your json file is invalid, please check it!\n",
+  INVALID_FILE_FORMAT: "Your input file is invalid, please check if it json or yaml!\n",
+  FETCH_CLIENT_FAILED_ERROR: "Fetch client failed! Please check your network or ts-codegen.config.ts file.\n",
+  NO_CLIENTS_OR_DATA: "You should provide at least one client or data file!\n"
+};
+var LOG_MESSAGE = {
+  GENERATING: "\u2604\uFE0F Generating...",
+  SUCCESSFUL: "\u{1F973} All request data generated successful!!!\n",
+  LOCAL_SUCCESSFUL: (fileIndex) => `\u2705  Request data generated successful from file${fileIndex + 1}!!!
+`,
+  READING_FROM_LOCAL: (fileIndex) => `\u{1F453} Reading swagger schema from local file${fileIndex + 1}...`,
+  GETTING_FROM_REMOTE: (index) => `\u{1F6DC} Getting swagger schema from client ${index + 1}...`,
+  REMOTE_SUCCESSFUL: (index) => `\u2705  Request data generated successful from client${index + 1}!!!
+`,
+  MISSING_OPERATION_ID: "\u26A0\uFE0F Some of your request does not have an operation id, generated request method will not has an uniq name!"
+};
+var HTTP_METHODS = ["get", "post", "put", "delete", "patch", "options", "head"];
+var SLASH = "/";
+var FILE_TIP = `
 /* 
     *  this file is generated by @miracleave-corp/swr-request-generator.
     *  please do not modify it manually.
     */
 
-  `,Y=r=>`// * No${r+1} Request File Content *
-`,l="#EnumTypeSuffix";var N=r=>console.log(`\x1B[32m${r}\x1B[39m`),Z=r=>console.log(`\x1B[33m${r}\x1B[39m`),O=r=>console.log(`\x1B[41m${r}\x1B[49m`);var p=r=>{if(!r)return"";let e=(0,R.camelCase)(r);return`${e.charAt(0).toUpperCase()}${e.slice(1)}`},te=(r=[])=>{let e={};return r.forEach(t=>{e[t]=t}),e},x=r=>ee.default.format(r,{printWidth:120,trailingComma:"all",arrowParens:"always",parser:"typescript"}),j=r=>{if((0,R.isEmpty)(r))return;let e=Object.entries(r).map(([t,s])=>{if(d(s)&&Object.keys(s).length===1&&!(0,R.isEmpty)(B(s,n=>n==="FormData")))return`${L(t)}: FormData`;if(d(s)){let n=JSON.stringify(s).replace(/"integer"/g,'"number"');return`${L(t)}: ${n.replace(/"/g,"")};`}let o=s.replace(l,"").replace(/integer/g,"number");return`${L(t)}: ${o};`});return r&&`{
-        ${e.sort().join(`
-`)}
-      }`},re=r=>{let e=Object.entries(r.body??{}).map(([,n])=>d(n)&&Object.keys(n).length===1&&!(0,R.isEmpty)(B(n,i=>i==="FormData"))?"FormData;":d(n)?`${JSON.stringify(n).replace(/"/g,"")};`:`${n.replace(l,"")};`),t=(0,R.isEmpty)(e)?"":`body: ${e.sort().join(`
-`)}`;if(r.query&&Object.keys(r.query).length>0){let n=`query: ${j(r.query)}`;return`{
-        ${t}
-        ${n}
-      }`}let s=Object.entries(r.query||{}).map(([,n])=>d(n)?`${JSON.stringify(n).replace(/"/g,"")};`:`${n.replace(l,"")};`),o=(0,R.isEmpty)(s)?"":`query: ${s.sort().join(`
-`)}`;return`{
-        ${t}
-        ${o}
-      }`},L=r=>{let e=r.includes("?"),t=J(r,"?");return`'${q(t)?t:(0,R.camelCase)(p(t))}'${e?"?":""}`},se=(r,e=S.INVALID_JSON_FILE_ERROR,t=O)=>{if(typeof r=="string")try{return JSON.parse(r)}catch{t(e);return}},A=r=>{if(d(r))return JSON.stringify(r).replace(/"/g,"");if(r!=="")return r};var c=class{constructor(e){this.inputs=e}schemaType={};static of(e){return new c(e)}getSchemaType=()=>this.schemaType;resolve=e=>{let{schema:t={},results:s,parentKey:o,key:n}=this.inputs;if(t.$ref)return this.schemaType=this.resolveRef(t.$ref,e||t.type),this.schemaType=this.resolveNullable().getSchemaType(),this;if(t.oneOf||t.anyOf)return this.schemaType=this.resolveOneOfAndAnyOf(t.oneOf||t.anyOf),this.schemaType=this.resolveNullable().getSchemaType(),this;if(t.allOf)return this.schemaType=this.resolveAllOf(t.allOf),this.schemaType=this.resolveNullable().getSchemaType(),this;if(t.items)return this.schemaType=this.resolveItems(t.items,t.type,n,o),this.schemaType=this.resolveNullable().getSchemaType(),this;if(t.enum){let i=this.getEnumName(n,o);return s[i]=t.enum,this.schemaType=i,this.schemaType=this.resolveNullable().getSchemaType(),this}return t.type==="object"?t.properties?(this.schemaType=this.resolveProperties(t.properties,t.required,o),this.schemaType=this.resolveNullable().getSchemaType(),this):t.title?(this.schemaType=t.type,this.schemaType=this.resolveNullable().getSchemaType(),this):(this.schemaType="{[key:string]:any}",this.schemaType=this.resolveNullable().getSchemaType(),this):t.type==="string"&&t.format==="binary"?(this.schemaType="FormData",this.schemaType=this.resolveNullable().getSchemaType(),this):(this.schemaType=this.getBasicType(t.type,this.resolveRef(t.$ref,e||t.type)),this.schemaType=this.resolveNullable().getSchemaType(),this)};resolveNullable=()=>(this.inputs.schema?.nullable&&(this.schemaType=d(this.schemaType)?`${JSON.stringify(this.schemaType)} | null`:`${this.schemaType} | null`),this);getEnumName=(e,t="")=>`${p(t)}${p(e)}${l}`;resolveRef=(e,t)=>{if(!e)return"";let s=p(this.pickTypeByRef(e));return t==="array"?`${s}[]`:s};resolveOneOfAndAnyOf=e=>e.map(t=>{let s=c.of({results:{},schema:t}).resolve(t.type).getSchemaType();return JSON.stringify(s)}).join(" | ").replace(l,"").replace(/"/g,"");resolveAllOf=e=>e.map(t=>{let s=c.of({results:{},schema:t}).resolve(t.type).getSchemaType();return JSON.stringify(s)}).join(" & ").replace(l,"").replace(/"/g,"");getBasicType=(e,t)=>{switch(e){case"integer":return"number";case"array":return this.getTypeForArray(t);case void 0:return t||"";default:return e}};getTypeForArray=e=>e?`${e}[]`:"Array<any>";pickTypeByRef=e=>{if(!e)return;let t=e.split("/");return t[t.length-1]};resolveItems=(e,t,s,o)=>{if(!e)return{};let n=a(e,"items");if(t==="array"){if(n)return`${this.resolveItems(n,e.type,s,o)}[]`;if(!a(e,"$ref"))return`${a(e,"type")}[]`}return V(e)?e.map(i=>c.of({results:this.inputs.results,schema:i,key:s,parentKey:o}).resolve().getSchemaType()):c.of({results:this.inputs.results,schema:e,key:s,parentKey:o}).resolve(t).getSchemaType()};resolveProperties=(e={},t=[],s)=>Object.entries(e).reduce((o,[n,i])=>({...o,[`${n}${t.indexOf(n)>-1?"":"?"}`]:c.of({results:this.inputs.results,schema:i,key:n,parentKey:s}).resolve().getSchemaType()}),{})};var g=require("moderndash");var F=(r,e)=>{if((0,g.isEmpty)(r))return"";let t=r[e],s=t.some(n=>z(n)),o=e.replace(l,"");return s?`export type ${o} = ${t.map(n=>JSON.stringify(n)).join("|")}`:`export enum ${o} ${JSON.stringify(te(t)).replace(/:/gi,"=")}`},M=r=>`use${p((0,g.camelCase)(r||""))}Request`,oe=r=>`useGetRequest<${A(r)}, ResponseError>`,ne=(r,e)=>`useMutationRequest<${e}, AxiosResponse<${A(r)}>, ResponseError>`,ie=(r,e,t="")=>(0,g.isEmpty)(r)&&(0,g.isEmpty)(e)?[void 0,void 0]:[`${p(t)}Request`,{query:e,body:r}],ae=r=>{let e={...r.TReqQuery,...r.TReqPath,...r.THeader},t=(0,g.isEmpty)(e)?void 0:j(e),s=[...r.pathParams??[],...r.queryParams??[],...Object.keys(r.THeader??{})].filter(Boolean).map(n=>q(n)?n:(0,g.camelCase)(n)),o=s.length===0?"":`{${s.join(",")}}:${t}`;return`${o?o+", ":""}SWRConfig?: SWRConfig<${A(r.TResp)}, ResponseError>, axiosConfig?: AxiosRequestConfig`},ce=(r,e)=>{let t={...r.TReqPath,...r.THeader},s=(0,g.isEmpty)(t)?void 0:j(t),o=[...r.pathParams??[],...Object.keys(r.THeader??{})].filter(Boolean).map(i=>q(i)?i:(0,g.camelCase)(i)),n=o.length===0?"":`{${o.join(",")}}:${s}`;return`${n?n+", ":""}mutationConfig?: SWRMutationConfig<${e}, AxiosResponse<${A(r.TResp)}>, ResponseError>, axiosConfig?: AxiosRequestConfig`},me=(r,e,t,s)=>{let o=Object.entries(s??{}).reduce((i,[m])=>{let u=q(m)?m:(0,g.camelCase)(m);return i+`"${m}": `+u+", "},""),n=r?`"Content-Type": "${a(e,t??"","application/json")}"`:"";return`headers: { ${o}${n}},`},W=r=>r.includes('"Accept":')?'responseType: "blob",':"";var E=class{constructor(e){this.components=e}resolvedDefinitions={};static of(e){return new E(e)}scanDefinitions=()=>{let e={},t=a(this.components,"requestBodies",{}),s=a(this.components,"schemas",{});return Object.entries(t).forEach(([o,n])=>P(n)?e[o]=c.of({results:e,schema:a(n,"content.application/json.schema"),key:o,parentKey:o}).resolve().getSchemaType():e[o]=c.of({results:e,schema:n,key:o,parentKey:o}).resolve().getSchemaType()),Object.entries(s).forEach(([o,n])=>{let i=c.of({results:e,schema:n,key:o,parentKey:n.enum?"":o}).resolve().getSchemaType();return n.enum||(e[o]=i),i}),this.resolvedDefinitions=e,this};toDeclarations=()=>Object.keys(this.resolvedDefinitions).sort().map(e=>{if(e.includes(l))return F(this.resolvedDefinitions,e);if(this.resolvedDefinitions[e]==="object"||(0,ue.isEmpty)(this.resolvedDefinitions[e]))return`export interface ${p(e)} {[key:string]:any}`;let t=j(this.resolvedDefinitions[e]);if(t)return`export interface ${p(e)} ${t}`}).filter(e=>!!e)};var T=$(require("path"),1);var b=require("moderndash");var C=class{constructor(e){this.paths=e}resolvedPaths=[];extraDefinitions={};contentType={};static of(e){return new C(e)}resolve=()=>(this.resolvedPaths=Object.entries(this.paths).reduce((e,[t,s])=>[...e,...this.resolvePath(s,t)],[]),this);toRequest=()=>{let e=this.resolvedPaths.sort(U("operationId")),t=[],s=e.map(i=>{let m=a(i,"THeader"),u=a(i.cookieParams,"[0]"),y=a(i,"requestBody"),Re=(0,b.camelCase)(p(y||u)),k=this.toHookParams(a(i,"queryParams")),v=me(!(0,b.isEmpty)(Re),this.contentType,i.operationId,m),[I,Se]=ie(i.TReqBody,i.TReqQuery,i.operationId);return t.push([I,Se]),i.method==="get"?`export const ${M(i.operationId)} = (${ae(i)}) => 
-        ${oe(i.TResp)}({
-        url: \`${i.url}\`,
-        method: "${i.method}",${v}${W(v)}
-        ${k?`params: ${k},`:""}...axiosConfig}, SWRConfig);`:`export const ${M(i.operationId)} = (${ce(i,I)}) => 
-        ${ne(i.TResp,I)}({
-        url: \`${i.url}\`,
-        method: "${i.method}",${v}${W(v)}
+  `;
+var getSplittingMessage = (fileIndex) => `// * No${fileIndex + 1} Request File Content *
+`;
+var ENUM_SUFFIX = `#EnumTypeSuffix`;
+
+// src/utils/console.ts
+var greenConsole = (text) => console.log(`\x1B[32m${text}\x1B[39m`);
+var yellowConsole = (text) => console.log(`\x1B[33m${text}\x1B[39m`);
+var redConsole = (text) => console.log(`\x1B[41m${text}\x1B[49m`);
+
+// src/utils/formatters.ts
+var toCapitalCase = (str) => {
+  if (!str) {
+    return "";
+  }
+  const camelStr = (0, import_moderndash.camelCase)(str);
+  return `${camelStr.charAt(0).toUpperCase()}${camelStr.slice(1)}`;
+};
+var arrayToObject = (arr = []) => {
+  const obj = {};
+  arr.forEach((item) => {
+    obj[item] = item;
+  });
+  return obj;
+};
+var prettifyCode = (code) => import_prettier.default.format(code, {
+  printWidth: 120,
+  trailingComma: "all",
+  arrowParens: "always",
+  parser: "typescript"
+});
+var toTypes = (definitions) => {
+  if ((0, import_moderndash.isEmpty)(definitions)) {
+    return;
+  }
+  const fieldDefinitionList = Object.entries(definitions).map(([key, value]) => {
+    if (isObject(value) && Object.keys(value).length === 1 && !(0, import_moderndash.isEmpty)(pickBy(value, (type) => type === "FormData"))) {
+      return `${convertKeyAndAddQuote(key)}: FormData`;
+    }
+    if (isObject(value)) {
+      const sanitizedValue = JSON.stringify(value).replace(/"integer"/g, '"number"');
+      return `${convertKeyAndAddQuote(key)}: ${sanitizedValue.replace(/"/g, "")};`;
+    }
+    const sanitizedType = value.replace(ENUM_SUFFIX, "").replace(/integer/g, "number");
+    return `${convertKeyAndAddQuote(key)}: ${sanitizedType};`;
+  });
+  return definitions && `{
+        ${fieldDefinitionList.sort().join("\n")}
+      }`;
+};
+var toRequestTypes = (requestTypeObj) => {
+  const requestBodyFieldList = Object.entries(requestTypeObj.body ?? {}).map(([, value]) => {
+    if (isObject(value) && Object.keys(value).length === 1 && !(0, import_moderndash.isEmpty)(pickBy(value, (type) => type === "FormData"))) {
+      return `FormData;`;
+    }
+    return isObject(value) ? `${JSON.stringify(value).replace(/"/g, "")};` : `${value.replace(ENUM_SUFFIX, "")};`;
+  });
+  const requestBodyDefinition = (0, import_moderndash.isEmpty)(requestBodyFieldList) ? "" : `body: ${requestBodyFieldList.sort().join("\n")}`;
+  if (requestTypeObj.query && Object.keys(requestTypeObj.query).length > 0) {
+    const requestQueryDefinition2 = `query: ${toTypes(requestTypeObj.query)}`;
+    return `{
+        ${requestBodyDefinition}
+        ${requestQueryDefinition2}
+      }`;
+  }
+  const requestQueryFieldList = Object.entries(requestTypeObj.query || {}).map(([, value]) => {
+    return isObject(value) ? `${JSON.stringify(value).replace(/"/g, "")};` : `${value.replace(ENUM_SUFFIX, "")};`;
+  });
+  const requestQueryDefinition = (0, import_moderndash.isEmpty)(requestQueryFieldList) ? "" : `query: ${requestQueryFieldList.sort().join("\n")}`;
+  return `{
+        ${requestBodyDefinition}
+        ${requestQueryDefinition}
+      }`;
+};
+var convertKeyAndAddQuote = (key) => {
+  const isOptional = key.includes("?");
+  const trimmedKey = trimEnd(key, "?");
+  const newKey = isValidVariableName(trimmedKey) ? trimmedKey : (0, import_moderndash.camelCase)(toCapitalCase(trimmedKey));
+  return `'${newKey}'${isOptional ? "?" : ""}`;
+};
+var convertJsonStringToJson = (str, errorMsg = ERROR_MESSAGES.INVALID_JSON_FILE_ERROR, output = redConsole) => {
+  if (typeof str !== "string") {
+    return;
+  }
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    output(errorMsg);
+    return;
+  }
+};
+var convertResponseTypeObject = (responseType) => {
+  if (isObject(responseType)) {
+    return JSON.stringify(responseType).replace(/"/g, "");
+  }
+  if (responseType === "") {
+    return void 0;
+  }
+  return responseType;
+};
+
+// src/resolvers/SchemaResolver.ts
+var SchemaResolver = class {
+  constructor(inputs) {
+    this.inputs = inputs;
+  }
+  schemaType = {};
+  static of(inputs) {
+    return new SchemaResolver(inputs);
+  }
+  getSchemaType = () => this.schemaType;
+  resolve = (type) => {
+    const { schema = {}, results, parentKey, key } = this.inputs;
+    if (schema.$ref) {
+      this.schemaType = this.resolveRef(schema.$ref, type || schema.type);
+      this.schemaType = this.resolveNullable().getSchemaType();
+      return this;
+    }
+    if (schema.oneOf || schema.anyOf) {
+      this.schemaType = this.resolveOneOfAndAnyOf(schema.oneOf || schema.anyOf);
+      this.schemaType = this.resolveNullable().getSchemaType();
+      return this;
+    }
+    if (schema.allOf) {
+      this.schemaType = this.resolveAllOf(schema.allOf);
+      this.schemaType = this.resolveNullable().getSchemaType();
+      return this;
+    }
+    if (schema.items) {
+      this.schemaType = this.resolveItems(
+        schema.items,
+        schema.type,
+        key,
+        parentKey
+      );
+      this.schemaType = this.resolveNullable().getSchemaType();
+      return this;
+    }
+    if (schema.enum) {
+      const enumKey = this.getEnumName(key, parentKey);
+      results[enumKey] = schema.enum;
+      this.schemaType = enumKey;
+      this.schemaType = this.resolveNullable().getSchemaType();
+      return this;
+    }
+    if (schema.type === "object") {
+      if (schema.properties) {
+        this.schemaType = this.resolveProperties(schema.properties, schema.required, parentKey);
+        this.schemaType = this.resolveNullable().getSchemaType();
+        return this;
+      }
+      if (schema.title) {
+        this.schemaType = schema.type;
+        this.schemaType = this.resolveNullable().getSchemaType();
+        return this;
+      }
+      this.schemaType = "{[key:string]:any}";
+      this.schemaType = this.resolveNullable().getSchemaType();
+      return this;
+    }
+    if (schema.type === "string" && schema.format === "binary") {
+      this.schemaType = "FormData";
+      this.schemaType = this.resolveNullable().getSchemaType();
+      return this;
+    }
+    this.schemaType = this.getBasicType(
+      schema.type,
+      this.resolveRef(schema.$ref, type || schema.type)
+    );
+    this.schemaType = this.resolveNullable().getSchemaType();
+    return this;
+  };
+  resolveNullable = () => {
+    if (this.inputs.schema?.nullable) {
+      this.schemaType = isObject(this.schemaType) ? `${JSON.stringify(this.schemaType)} | null` : `${this.schemaType} | null`;
+    }
+    return this;
+  };
+  getEnumName = (propertyName, parentKey = "") => `${toCapitalCase(parentKey)}${toCapitalCase(propertyName)}${ENUM_SUFFIX}`;
+  resolveRef = ($ref, type) => {
+    if (!$ref) {
+      return "";
+    }
+    const refType = toCapitalCase(this.pickTypeByRef($ref));
+    return type === "array" ? `${refType}[]` : refType;
+  };
+  resolveOneOfAndAnyOf = (oneOfOrAnyOf) => {
+    return oneOfOrAnyOf.map((schema) => {
+      const schemaType = SchemaResolver.of({ results: {}, schema }).resolve(schema.type).getSchemaType();
+      return JSON.stringify(schemaType);
+    }).join(" | ").replace(ENUM_SUFFIX, "").replace(/"/g, "");
+  };
+  resolveAllOf = (allOf) => {
+    return allOf.map((schema) => {
+      const schemaType = SchemaResolver.of({ results: {}, schema }).resolve(schema.type).getSchemaType();
+      return JSON.stringify(schemaType);
+    }).join(" & ").replace(ENUM_SUFFIX, "").replace(/"/g, "");
+  };
+  getBasicType = (basicType, advancedType) => {
+    switch (basicType) {
+      case "integer":
+        return "number";
+      case "array":
+        return this.getTypeForArray(advancedType);
+      case void 0:
+        return advancedType || "";
+      default:
+        return basicType;
+    }
+  };
+  getTypeForArray = (advancedType) => advancedType ? `${advancedType}[]` : "Array<any>";
+  pickTypeByRef = (str) => {
+    if (!str) {
+      return;
+    }
+    const list = str.split("/");
+    return list[list.length - 1];
+  };
+  resolveItems = (items, type, key, parentKey) => {
+    if (!items) {
+      return {};
+    }
+    const child = get(items, "items");
+    if (type === "array") {
+      if (child) {
+        return `${this.resolveItems(child, items.type, key, parentKey)}[]`;
+      }
+      if (!get(items, "$ref")) {
+        return `${get(items, "type")}[]`;
+      }
+    }
+    if (isArray(items)) {
+      return items.map(
+        (item) => SchemaResolver.of({ results: this.inputs.results, schema: item, key, parentKey }).resolve().getSchemaType()
+      );
+    }
+    return SchemaResolver.of({ results: this.inputs.results, schema: items, key, parentKey }).resolve(type).getSchemaType();
+  };
+  resolveProperties = (properties = {}, required = [], parentKey) => Object.entries(properties).reduce(
+    (o, [key, value]) => ({
+      ...o,
+      [`${key}${required.indexOf(key) > -1 ? "" : "?"}`]: SchemaResolver.of({
+        results: this.inputs.results,
+        schema: value,
+        key,
+        parentKey
+      }).resolve().getSchemaType()
+    }),
+    {}
+  );
+};
+
+// src/utils/generators.ts
+var import_moderndash2 = require("moderndash");
+var generateEnums = (definitions, key) => {
+  if ((0, import_moderndash2.isEmpty)(definitions)) {
+    return "";
+  }
+  const enums = definitions[key];
+  const hasNumber = enums.some((enumValue) => isNumber(enumValue));
+  const enumName = key.replace(ENUM_SUFFIX, "");
+  return hasNumber ? `export type ${enumName} = ${enums.map((item) => JSON.stringify(item)).join("|")}` : `export enum ${enumName} ${JSON.stringify(arrayToObject(enums)).replace(/:/gi, "=")}`;
+};
+var generateFunctionName = (operationId) => `use${toCapitalCase((0, import_moderndash2.camelCase)(operationId || ""))}Request`;
+var generateGetClientName = (responseType) => `useGetRequest<${convertResponseTypeObject(responseType)}, ResponseError>`;
+var generateMutationClientName = (responseType, requestBodyTypes) => `useMutationRequest<${requestBodyTypes}, AxiosResponse<${convertResponseTypeObject(responseType)}>, ResponseError>`;
+var generateRequestBodyAndParams = (requestBodyType, requestQueryType, operationId = "") => {
+  if ((0, import_moderndash2.isEmpty)(requestBodyType) && (0, import_moderndash2.isEmpty)(requestQueryType)) {
+    return [void 0, void 0];
+  }
+  return [`${toCapitalCase(operationId)}Request`, { query: requestQueryType, body: requestBodyType }];
+};
+var generateGetRequestArguments = (resolvedPath) => {
+  const requestType = {
+    ...resolvedPath.TReqQuery,
+    ...resolvedPath.TReqPath,
+    ...resolvedPath.THeader
+  };
+  const argumentTypes = !(0, import_moderndash2.isEmpty)(requestType) ? toTypes(requestType) : void 0;
+  const requestParamList = [
+    ...resolvedPath.pathParams ?? [],
+    ...resolvedPath.queryParams ?? [],
+    ...Object.keys(resolvedPath.THeader ?? {})
+  ].filter(Boolean).map((param) => isValidVariableName(param) ? param : (0, import_moderndash2.camelCase)(param));
+  const requestParams = requestParamList.length === 0 ? "" : `{${requestParamList.join(",")}}:${argumentTypes}`;
+  return `${requestParams ? requestParams + ", " : ""}SWRConfig?: SWRConfig<${convertResponseTypeObject(
+    resolvedPath.TResp
+  )}, ResponseError>, axiosConfig?: AxiosRequestConfig`;
+};
+var generateMutationRequestArguments = (resolvedPath, requestBodyTypes) => {
+  const requestType = {
+    ...resolvedPath.TReqPath,
+    ...resolvedPath.THeader
+  };
+  const argumentTypes = !(0, import_moderndash2.isEmpty)(requestType) ? toTypes(requestType) : void 0;
+  const requestParamList = [...resolvedPath.pathParams ?? [], ...Object.keys(resolvedPath.THeader ?? {})].filter(Boolean).map((param) => isValidVariableName(param) ? param : (0, import_moderndash2.camelCase)(param));
+  const requestParams = requestParamList.length === 0 ? "" : `{${requestParamList.join(",")}}:${argumentTypes}`;
+  return `${requestParams ? requestParams + ", " : ""}mutationConfig?: SWRMutationConfig<${requestBodyTypes}, AxiosResponse<${convertResponseTypeObject(
+    resolvedPath.TResp
+  )}>, ResponseError>, axiosConfig?: AxiosRequestConfig`;
+};
+var generateHeader = (hasBody, contentTypes, operationId, header) => {
+  const result = Object.entries(header ?? {}).reduce((result2, [typeKey]) => {
+    const typeValue = isValidVariableName(typeKey) ? typeKey : (0, import_moderndash2.camelCase)(typeKey);
+    return result2 + `"${typeKey}": ` + typeValue + ", ";
+  }, "");
+  const contentType = hasBody ? `"Content-Type": "${get(contentTypes, operationId ?? "", "application/json")}"` : "";
+  return `headers: { ${result}${contentType}},`;
+};
+var generateResponseType = (axiosHeaderConfig) => axiosHeaderConfig.includes('"Accept":') ? 'responseType: "blob",' : "";
+
+// src/resolvers/DefinitionsResolver.ts
+var DefinitionsResolver = class {
+  constructor(components) {
+    this.components = components;
+  }
+  resolvedDefinitions = {};
+  static of(components) {
+    return new DefinitionsResolver(components);
+  }
+  scanDefinitions = () => {
+    const results = {};
+    const requestBodies = get(
+      this.components,
+      "requestBodies",
+      {}
+    );
+    const schemas = get(this.components, "schemas", {});
+    Object.entries(requestBodies).forEach(([requestBodyName, requestBody]) => {
+      if (isRequestBody(requestBody)) {
+        return results[requestBodyName] = SchemaResolver.of({
+          results,
+          schema: get(requestBody, "content.application/json.schema"),
+          key: requestBodyName,
+          parentKey: requestBodyName
+        }).resolve().getSchemaType();
+      }
+      return results[requestBodyName] = SchemaResolver.of({
+        results,
+        schema: requestBody,
+        key: requestBodyName,
+        parentKey: requestBodyName
+      }).resolve().getSchemaType();
+    });
+    Object.entries(schemas).forEach(([schemaName, schema]) => {
+      const result = SchemaResolver.of({
+        results,
+        schema,
+        key: schemaName,
+        // enum is a top level data type, will not have children, parentKey should be empty
+        parentKey: schema.enum ? "" : schemaName
+      }).resolve().getSchemaType();
+      if (!schema.enum)
+        results[schemaName] = result;
+      return result;
+    });
+    this.resolvedDefinitions = results;
+    return this;
+  };
+  toDeclarations = () => {
+    return Object.keys(this.resolvedDefinitions).sort().map((key) => {
+      if (key.includes(ENUM_SUFFIX)) {
+        return generateEnums(this.resolvedDefinitions, key);
+      }
+      if (this.resolvedDefinitions[key] === "object" || (0, import_moderndash3.isEmpty)(this.resolvedDefinitions[key])) {
+        return `export interface ${toCapitalCase(key)} {[key:string]:any}`;
+      }
+      const val = toTypes(this.resolvedDefinitions[key]);
+      if (val) {
+        return `export interface ${toCapitalCase(key)} ${val}`;
+      }
+    }).filter((x) => !!x);
+  };
+};
+
+// src/index.ts
+var import_node_path = __toESM(require("path"), 1);
+
+// src/resolvers/PathResolver.ts
+var import_moderndash4 = require("moderndash");
+var PathResolver = class {
+  constructor(paths) {
+    this.paths = paths;
+  }
+  resolvedPaths = [];
+  extraDefinitions = {};
+  contentType = {};
+  static of(paths) {
+    return new PathResolver(paths);
+  }
+  resolve = () => {
+    this.resolvedPaths = Object.entries(this.paths).reduce(
+      (results, [pathName, path2]) => [...results, ...this.resolvePath(path2, pathName)],
+      []
+    );
+    return this;
+  };
+  toRequest = () => {
+    const data = this.resolvedPaths.sort(sortBy("operationId"));
+    const requestBodiesAndParams = [];
+    const requestHooks = data.map((resolvedPath) => {
+      const headerType = get(resolvedPath, "THeader");
+      const cookie = get(resolvedPath.cookieParams, "[0]");
+      const requestBody = get(resolvedPath, "requestBody");
+      const body = (0, import_moderndash4.camelCase)(toCapitalCase(requestBody || cookie));
+      const params = this.toHookParams(get(resolvedPath, "queryParams"));
+      const axiosHeaderConfig = generateHeader(!(0, import_moderndash4.isEmpty)(body), this.contentType, resolvedPath.operationId, headerType);
+      const [requestInterfaceName, requestInterfaceObj] = generateRequestBodyAndParams(
+        resolvedPath.TReqBody,
+        resolvedPath.TReqQuery,
+        resolvedPath.operationId
+      );
+      requestBodiesAndParams.push([requestInterfaceName, requestInterfaceObj]);
+      if (resolvedPath.method === "get") {
+        return `export const ${generateFunctionName(resolvedPath.operationId)} = (${generateGetRequestArguments(
+          resolvedPath
+        )}) => 
+        ${generateGetClientName(resolvedPath.TResp)}({
+        url: \`${resolvedPath.url}\`,
+        method: "${resolvedPath.method}",${axiosHeaderConfig}${generateResponseType(axiosHeaderConfig)}
+        ${params ? `params: ${params},` : ""}...axiosConfig}, SWRConfig);`;
+      }
+      return `export const ${generateFunctionName(resolvedPath.operationId)} = (${generateMutationRequestArguments(
+        resolvedPath,
+        requestInterfaceName
+      )}) => 
+        ${generateMutationClientName(resolvedPath.TResp, requestInterfaceName)}({
+        url: \`${resolvedPath.url}\`,
+        method: "${resolvedPath.method}",${axiosHeaderConfig}${generateResponseType(axiosHeaderConfig)}
         mutationConfig,
-        axiosConfig});`}),o=Object.keys(this.extraDefinitions).map(i=>F(this.extraDefinitions,i)),n=t.map(([i,m])=>{if(i)return Object.keys(m).forEach(u=>{(0,b.isEmpty)(m[u])&&delete m[u]}),`export interface ${i} ${re(m)}`}).filter(Boolean);return[...s,...n,...o]};toHookParams=(e=[])=>(0,b.isEmpty)(e)?void 0:`{
-    ${e.join(`,
-`)}
-    }`;resolvePath(e,t){let s=H(e,Q);return Object.keys(s).map(o=>({url:this.getRequestURL(t),method:o,...this.resolveOperation(s[o])}))}getRequestURL=e=>e.split(_).map(t=>this.isPathParam(t)?`$${t}`:t).join(_);isPathParam=e=>e.startsWith("{");resolveOperation=e=>{e.operationId||Z(h.MISSING_OPERATION_ID);let t=this.pickParams(e.parameters),s=t("header"),o={pathParams:t("path"),queryParams:t("query"),cookieParams:t("cookie")};return{operationId:e.operationId,TResp:this.getResponseTypes(e.responses),TReqQuery:this.getQueryParamsTypes(o.queryParams),TReqPath:this.getPathParamsTypes(o.pathParams),TReqCookie:this.getCookieParamsTypes(o.cookieParams),TReqBody:this.getRequestBodyTypes(e.operationId,a(e,"requestBody")),THeader:this.getPathParamsTypes(s),...this.getParamsNames(o),...this.getRequestBodyName(a(e,"requestBody"),e.operationId)}};getParamsNames=e=>{let t=s=>(0,b.isEmpty)(s)?[]:s?.map(o=>o.name);return{pathParams:t(e.pathParams),queryParams:t(e.queryParams),cookieParams:t(e.cookieParams)}};getPathParamsTypes=e=>e?.reduce((t,s)=>{let o=a(s,"schema");return K(o)?{...t,[`${s.name}${s.required?"":"?"}`]:o.type==="integer"?"number":o.type}:{...t}},{})??{};getQueryParamsTypes=e=>e?.reduce((t,s)=>({...t,[`${s.name}${s.required?"":"?"}`]:c.of({results:this.extraDefinitions,schema:s.schema,key:s.name,parentKey:s.name}).resolve().getSchemaType()}),{})??{};getCookieParamsTypes=e=>e?.reduce((t,s)=>({...t,[`${s.name}${s.required?"":"?"}`]:c.of({results:this.extraDefinitions,schema:s.schema,key:s.name,parentKey:s.name}).resolve().getSchemaType()}),{})??{};getResponseTypes=e=>c.of({results:this.extraDefinitions,schema:a(e,"200.content.application/json.schema")||a(e,"200.content.*/*.schema")||a(e,"201.content.application/json.schema")||a(e,"201.content.*/*.schema")||a(e,"default.content.application/json.schema")||a(e,"default.content.application/json; charset=UTF-8.schema")}).resolve().getSchemaType();pickParams=e=>t=>e?.filter(s=>s.in===t);getContentType(e,t){t&&Object.assign(this.contentType,{[t]:e})}getRequestBodyTypes(e,t){if(P(t)){let s=a(t,"content",{});return Object.entries(s).reduce((o,[n,i])=>(this.getContentType(n,e),{...o,[`${e}Request`]:c.of({results:this.extraDefinitions,schema:i.schema,key:`${e}Request`,parentKey:`${e}Request`}).resolve().getSchemaType()}),{})}return{[`${e}Request`]:c.of({results:this.extraDefinitions,schema:t,key:`${e}Request`,parentKey:`${e}Request`}).resolve().getSchemaType()}}getRequestBodyName(e,t){if(e)return{requestBody:`${t}Request`}}};var ye=$(require("axios"),1);var w=require("commander");var pe=`// you can use this file as your request handler directly,
+        axiosConfig});`;
+    });
+    const enums = Object.keys(this.extraDefinitions).map((k) => generateEnums(this.extraDefinitions, k));
+    const requestParamsDefinition = requestBodiesAndParams.map(([interfaceName, request]) => {
+      if (!interfaceName)
+        return void 0;
+      Object.keys(request).forEach((key) => {
+        if ((0, import_moderndash4.isEmpty)(request[key])) {
+          delete request[key];
+        }
+      });
+      return `export interface ${interfaceName} ${toRequestTypes(request)}`;
+    }).filter(Boolean);
+    return [...requestHooks, ...requestParamsDefinition, ...enums];
+  };
+  toHookParams = (data = []) => !(0, import_moderndash4.isEmpty)(data) ? `{
+    ${data.join(",\n")}
+    }` : void 0;
+  resolvePath(path2, pathName) {
+    const operations = pick(path2, HTTP_METHODS);
+    return Object.keys(operations).map((httpMethod) => ({
+      url: this.getRequestURL(pathName),
+      method: httpMethod,
+      ...this.resolveOperation(operations[httpMethod])
+    }));
+  }
+  getRequestURL = (pathName) => {
+    return pathName.split(SLASH).map((p) => this.isPathParam(p) ? `$${p}` : p).join(SLASH);
+  };
+  isPathParam = (str) => str.startsWith("{");
+  resolveOperation = (operation) => {
+    if (!operation.operationId) {
+      yellowConsole(LOG_MESSAGE.MISSING_OPERATION_ID);
+    }
+    const pickParamsByType = this.pickParams(operation.parameters);
+    const headerParams = pickParamsByType("header");
+    const params = {
+      pathParams: pickParamsByType("path"),
+      queryParams: pickParamsByType("query"),
+      cookieParams: pickParamsByType("cookie")
+    };
+    return {
+      operationId: operation.operationId,
+      TResp: this.getResponseTypes(operation.responses),
+      TReqQuery: this.getQueryParamsTypes(params.queryParams),
+      TReqPath: this.getPathParamsTypes(params.pathParams),
+      TReqCookie: this.getCookieParamsTypes(params.cookieParams),
+      TReqBody: this.getRequestBodyTypes(operation.operationId, get(operation, "requestBody")),
+      THeader: this.getPathParamsTypes(headerParams),
+      ...this.getParamsNames(params),
+      ...this.getRequestBodyName(get(operation, "requestBody"), operation.operationId)
+    };
+  };
+  getParamsNames = (params) => {
+    const getNames = (list) => (0, import_moderndash4.isEmpty)(list) ? [] : list?.map((item) => item.name);
+    return {
+      pathParams: getNames(params.pathParams),
+      queryParams: getNames(params.queryParams),
+      cookieParams: getNames(params.cookieParams)
+    };
+  };
+  getPathParamsTypes = (pathParams) => pathParams?.reduce((results, param) => {
+    const schema = get(param, "schema");
+    if (isSchema(schema)) {
+      return {
+        ...results,
+        [`${param.name}${param.required ? "" : "?"}`]: schema.type === "integer" ? "number" : schema.type
+      };
+    }
+    return {
+      ...results
+    };
+  }, {}) ?? {};
+  getQueryParamsTypes = (queryParams) => queryParams?.reduce(
+    (results, param) => ({
+      ...results,
+      [`${param.name}${param.required ? "" : "?"}`]: SchemaResolver.of({
+        results: this.extraDefinitions,
+        schema: param.schema,
+        key: param.name,
+        parentKey: param.name
+      }).resolve().getSchemaType()
+    }),
+    {}
+  ) ?? {};
+  getCookieParamsTypes = (formDataParams) => formDataParams?.reduce(
+    (results, param) => ({
+      ...results,
+      [`${param.name}${param.required ? "" : "?"}`]: SchemaResolver.of({
+        results: this.extraDefinitions,
+        schema: param.schema,
+        key: param.name,
+        parentKey: param.name
+      }).resolve().getSchemaType()
+    }),
+    {}
+  ) ?? {};
+  getResponseTypes = (responses) => SchemaResolver.of({
+    results: this.extraDefinitions,
+    schema: get(responses, "200.content.application/json.schema") || get(responses, "200.content.*/*.schema") || get(responses, "201.content.application/json.schema") || get(responses, "201.content.*/*.schema") || get(responses, "default.content.application/json.schema") || get(responses, "default.content.application/json; charset=UTF-8.schema")
+  }).resolve().getSchemaType();
+  pickParams = (parameters) => (type) => parameters?.filter((param) => param.in === type);
+  getContentType(key, operationId) {
+    operationId && Object.assign(this.contentType, { [operationId]: key });
+  }
+  getRequestBodyTypes(operationId, requestBody) {
+    if (isRequestBody(requestBody)) {
+      const content = get(requestBody, "content", {});
+      return Object.entries(content).reduce((results, [key, content2]) => {
+        this.getContentType(key, operationId);
+        return {
+          ...results,
+          [`${operationId}Request`]: SchemaResolver.of({
+            results: this.extraDefinitions,
+            schema: content2.schema,
+            key: `${operationId}Request`,
+            parentKey: `${operationId}Request`
+          }).resolve().getSchemaType()
+        };
+      }, {});
+    }
+    return {
+      [`${operationId}Request`]: SchemaResolver.of({
+        results: this.extraDefinitions,
+        schema: requestBody,
+        key: `${operationId}Request`,
+        parentKey: `${operationId}Request`
+      }).resolve().getSchemaType()
+    };
+  }
+  getRequestBodyName(requestBody, operationId) {
+    if (requestBody) {
+      return {
+        requestBody: `${operationId}Request`
+      };
+    }
+  }
+};
+
+// src/index.ts
+var import_axios = __toESM(require("axios"), 1);
+var import_commander = require("commander");
+
+// src/template/useGetRequest.ts
+var useGetRequest = `// you can use this file as your request handler directly,
 // or you can use your own request handler file, just need to align hook name and interface
 import useSWR, { SWRResponse } from "swr";
 import { SWRConfiguration } from "swr/_internal";
@@ -87,7 +730,10 @@ export const useGetRequest = <Data = unknown, Error = unknown>(
     swrConfig,
   );
   return { data: response && response.data, response, error, isValidating, isLoading, mutate };
-};`;var le=`import useSWRMutation, { SWRMutationConfiguration } from "swr/mutation";
+};`;
+
+// src/template/useMutationRequest.ts
+var useMutationRequest = `import useSWRMutation, { SWRMutationConfiguration } from "swr/mutation";
 import { AxiosError, AxiosRequestConfig, AxiosResponse, RawAxiosRequestHeaders } from "axios";
 import { client } from "src/request/client";
 
@@ -129,16 +775,108 @@ export const useMutationRequest = <
   );
 
   return { trigger, data, isMutating, error, reset };
-};`;var ge=`import axios, { AxiosInstance } from "axios";
+};`;
+
+// src/template/client.ts
+var client = `import axios, { AxiosInstance } from "axios";
 
 export const API_DEFAULT_TIMEOUT = 30 * 1000;
 
 export const client: AxiosInstance = axios.create({
   baseURL: "/api",
   timeout: API_DEFAULT_TIMEOUT,
-});`;w.program.option("-a, --authorization <value>","authorization header value").parse(process.argv);var fe=T.default.resolve("ts-codegen.config.json"),Ee=async()=>f.default.existsSync(fe)?await import(fe,{assert:{type:"json"}}).then(r=>r.default):{output:".output",fileHeaders:[],clients:[]},de=(r,e,t,s)=>{if(typeof r=="string")throw Error(S.INVALID_JSON_FILE_ERROR);let o=(t?Y(s):"")+[...C.of(r.paths).resolve().toRequest(),...E.of(r.components).scanDefinitions().toDeclarations()].join(`
+});`;
 
-`);e.write(x(o),"utf-8")},Ce=(r=[],e,t)=>{r.map((s,o)=>{if(!s.endsWith("json")&&!s.endsWith("yml")&&!s.endsWith("yaml")){O(S.INVALID_FILE_FORMAT);return}console.log(h.READING_FROM_LOCAL(o));let n=f.default.readFileSync(s,"utf8"),i=s.endsWith("json")?se(n):he.load(n);i&&(console.log(h.GENERATING),de(i,e,t,o),N(h.LOCAL_SUCCESSFUL(o)))})},$e=(r=[],e,t,s,o)=>{if(r){let n=w.program.opts(),i=ye.default.create({timeout:s||10*1e3,headers:n.authorization?{Authorization:n.authorization}:void 0});r.map((m,u)=>{console.log(h.GETTING_FROM_REMOTE(u)),i.get(m).then(y=>{console.log(h.GENERATING),de(y.data,e,t,u+(o?.length??0)),N(h.REMOTE_SUCCESSFUL(u))}).catch(y=>{O(`${y.code}: ${S.FETCH_CLIENT_FAILED_ERROR}`)})})}},Ae=(r,e="request",t)=>{f.default.existsSync(r)||f.default.mkdirSync(r);let s=T.default.resolve(r,`./${e}.ts`);f.default.existsSync(T.default.resolve(r,`./${e||"request"}.ts`))&&f.default.unlinkSync(s);let o=f.default.createWriteStream(s);return o.on("error",n=>{O(n.message)}),o.on("finish",()=>{N(h.SUCCESSFUL)}),o.write(x((t?t.join(`
-`):"")+`
-
-`+X),"utf-8"),{requestFileWriteStream:o}};Ee().then(({output:r=".output",fileHeaders:e,timeout:t,data:s,clients:o,fileName:n,needRequestHook:i,needClient:m})=>{if(!s&&!o){O(S.NO_CLIENTS_OR_DATA);return}let u=(s?.length??0)+(o?.length??0)>1,{requestFileWriteStream:y}=Ae(r,n,e);Ce(s,y,u),$e(o,y,u,t,s),y.end(),i&&(f.default.writeFileSync(T.default.resolve(r,"./useGetRequest.ts"),x(pe),"utf-8"),f.default.writeFileSync(T.default.resolve(r,"./useMutationRequest.ts"),x(le),"utf-8")),m&&f.default.writeFileSync(T.default.resolve(r,"./client.ts"),x(ge),"utf-8")});
+// src/index.ts
+import_commander.program.option("-a, --authorization <value>", "authorization header value").parse(process.argv);
+var codegenConfigPath = import_node_path.default.resolve("ts-codegen.config.json");
+var getCodegenConfig = async () => import_node_fs.default.existsSync(codegenConfigPath) ? await import(codegenConfigPath, { assert: { type: "json" } }).then((module2) => module2.default) : {
+  output: ".output",
+  fileHeaders: [],
+  clients: []
+};
+var codegen = (schema, writeStream, isMultiFile, fileIndex) => {
+  if (typeof schema === "string") {
+    throw Error(ERROR_MESSAGES.INVALID_JSON_FILE_ERROR);
+  }
+  const fileStr = (isMultiFile ? getSplittingMessage(fileIndex) : "") + [
+    ...PathResolver.of(schema.paths).resolve().toRequest(),
+    ...DefinitionsResolver.of(schema.components).scanDefinitions().toDeclarations()
+  ].join("\n\n");
+  writeStream.write(prettifyCode(fileStr), "utf-8");
+};
+var generateFromFiles = (data = [], requestWriteStream, isMultiFile) => {
+  data.map((file, index) => {
+    if (!file.endsWith("json") && !file.endsWith("yml") && !file.endsWith("yaml")) {
+      redConsole(ERROR_MESSAGES.INVALID_FILE_FORMAT);
+      return;
+    }
+    console.log(LOG_MESSAGE.READING_FROM_LOCAL(index));
+    const schemaStr = import_node_fs.default.readFileSync(file, "utf8");
+    const schema = file.endsWith("json") ? convertJsonStringToJson(schemaStr) : yaml.load(schemaStr);
+    if (schema) {
+      console.log(LOG_MESSAGE.GENERATING);
+      codegen(schema, requestWriteStream, isMultiFile, index);
+      greenConsole(LOG_MESSAGE.LOCAL_SUCCESSFUL(index));
+    }
+  });
+};
+var generateFromClients = (clients = [], requestWriteStream, isMultiFile, timeout, data) => {
+  if (clients) {
+    const options = import_commander.program.opts();
+    const instance = import_axios.default.create({
+      timeout: timeout || 10 * 1e3,
+      headers: options.authorization ? {
+        Authorization: options.authorization
+      } : void 0
+    });
+    clients.map((client2, index) => {
+      console.log(LOG_MESSAGE.GETTING_FROM_REMOTE(index));
+      instance.get(client2).then((response) => {
+        console.log(LOG_MESSAGE.GENERATING);
+        codegen(response.data, requestWriteStream, isMultiFile, index + (data?.length ?? 0));
+        greenConsole(LOG_MESSAGE.REMOTE_SUCCESSFUL(index));
+      }).catch((error) => {
+        redConsole(`${error.code}: ${ERROR_MESSAGES.FETCH_CLIENT_FAILED_ERROR}`);
+      });
+    });
+  }
+};
+var setupDirAndCreateWriteStream = (output, fileName = "request", fileHeaders) => {
+  if (!import_node_fs.default.existsSync(output)) {
+    import_node_fs.default.mkdirSync(output);
+  }
+  const requestFilePath = import_node_path.default.resolve(output, `./${fileName}.ts`);
+  if (import_node_fs.default.existsSync(import_node_path.default.resolve(output, `./${fileName || "request"}.ts`))) {
+    import_node_fs.default.unlinkSync(requestFilePath);
+  }
+  const requestFileWriteStream = import_node_fs.default.createWriteStream(requestFilePath);
+  requestFileWriteStream.on("error", (err) => {
+    redConsole(err.message);
+  });
+  requestFileWriteStream.on("finish", () => {
+    greenConsole(LOG_MESSAGE.SUCCESSFUL);
+  });
+  requestFileWriteStream.write(prettifyCode((fileHeaders ? fileHeaders.join("\n") : "") + "\n\n" + FILE_TIP), "utf-8");
+  return { requestFileWriteStream };
+};
+getCodegenConfig().then(
+  ({ output = ".output", fileHeaders, timeout, data, clients, fileName, needRequestHook, needClient }) => {
+    if (!data && !clients) {
+      redConsole(ERROR_MESSAGES.NO_CLIENTS_OR_DATA);
+      return;
+    }
+    const isMultiFile = (data?.length ?? 0) + (clients?.length ?? 0) > 1;
+    const { requestFileWriteStream } = setupDirAndCreateWriteStream(output, fileName, fileHeaders);
+    generateFromFiles(data, requestFileWriteStream, isMultiFile);
+    generateFromClients(clients, requestFileWriteStream, isMultiFile, timeout, data);
+    requestFileWriteStream.end();
+    if (needRequestHook) {
+      import_node_fs.default.writeFileSync(import_node_path.default.resolve(output, "./useGetRequest.ts"), prettifyCode(useGetRequest), "utf-8");
+      import_node_fs.default.writeFileSync(import_node_path.default.resolve(output, "./useMutationRequest.ts"), prettifyCode(useMutationRequest), "utf-8");
+    }
+    if (needClient) {
+      import_node_fs.default.writeFileSync(import_node_path.default.resolve(output, "./client.ts"), prettifyCode(client), "utf-8");
+    }
+  }
+);
