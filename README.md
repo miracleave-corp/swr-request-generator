@@ -42,19 +42,19 @@ And if anyone want to make it happen, it should be super cool 🥳
 ### 🛠 Install
 
 ```bash
-pnpm install -D @openapi-integration/swr-request-generator
+pnpm install -D @miracleave-corp/swr-request-generator
 ```
 
 or
 
 ```bash
-yarn add -D @openapi-integration/swr-request-generator
+yarn add -D @miracleave-corp/swr-request-generator
 ```
 
 or
 
 ```bash
-npm install -D @openapi-integration/swr-request-generator
+npm install -D @miracleave-corp/swr-request-generator
 ```
 
 ### 🔧 Configuration

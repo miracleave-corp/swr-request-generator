@@ -19,7 +19,7 @@
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
-    "@openapi-integration/swr-request-generator": "1.2.0",
+    "@miracleave-corp/swr-request-generator": "1.2.0",
     "msw": "^1.0.1"
   },
   "scripts": {
