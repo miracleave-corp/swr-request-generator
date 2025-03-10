@@ -20,7 +20,7 @@ const codegenConfigPath = path.resolve("ts-codegen.config.json");
 
 const getCodegenConfig = async (): Promise<CodegenConfig> =>
   fs.existsSync(codegenConfigPath)
-    ? await import(codegenConfigPath, { assert: { type: "json" } }).then((module) => module.default)
+    ? await import(codegenConfigPath, { with: { type: "json" } }).then((module) => module.default)
     : {
         output: ".output",
         fileHeaders: [],

@@ -790,7 +790,7 @@ export const client: AxiosInstance = axios.create({
 // src/index.ts
 import_commander.program.option("-a, --authorization <value>", "authorization header value").parse(process.argv);
 var codegenConfigPath = import_node_path.default.resolve("ts-codegen.config.json");
-var getCodegenConfig = async () => import_node_fs.default.existsSync(codegenConfigPath) ? await import(codegenConfigPath, { assert: { type: "json" } }).then((module2) => module2.default) : {
+var getCodegenConfig = async () => import_node_fs.default.existsSync(codegenConfigPath) ? await import(codegenConfigPath, { with: { type: "json" } }).then((module2) => module2.default) : {
   output: ".output",
   fileHeaders: [],
   clients: []
