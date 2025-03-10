@@ -206,13 +206,13 @@ var convertResponseTypeObject = (responseType) => {
 };
 
 // src/resolvers/SchemaResolver.ts
-var SchemaResolver = class {
+var SchemaResolver = class _SchemaResolver {
   constructor(inputs) {
     this.inputs = inputs;
   }
   schemaType = {};
   static of(inputs) {
-    return new SchemaResolver(inputs);
+    return new _SchemaResolver(inputs);
   }
   getSchemaType = () => this.schemaType;
   resolve = (type) => {
@@ -292,13 +292,13 @@ var SchemaResolver = class {
   };
   resolveOneOfAndAnyOf = (oneOfOrAnyOf) => {
     return oneOfOrAnyOf.map((schema) => {
-      const schemaType = SchemaResolver.of({ results: {}, schema }).resolve(schema.type).getSchemaType();
+      const schemaType = _SchemaResolver.of({ results: {}, schema }).resolve(schema.type).getSchemaType();
       return JSON.stringify(schemaType);
     }).join(" | ").replace(ENUM_SUFFIX, "").replace(/"/g, "");
   };
   resolveAllOf = (allOf) => {
     return allOf.map((schema) => {
-      const schemaType = SchemaResolver.of({ results: {}, schema }).resolve(schema.type).getSchemaType();
+      const schemaType = _SchemaResolver.of({ results: {}, schema }).resolve(schema.type).getSchemaType();
       return JSON.stringify(schemaType);
     }).join(" & ").replace(ENUM_SUFFIX, "").replace(/"/g, "");
   };
@@ -337,15 +337,15 @@ var SchemaResolver = class {
     }
     if (isArray(items)) {
       return items.map(
-        (item) => SchemaResolver.of({ results: this.inputs.results, schema: item, key, parentKey }).resolve().getSchemaType()
+        (item) => _SchemaResolver.of({ results: this.inputs.results, schema: item, key, parentKey }).resolve().getSchemaType()
       );
     }
-    return SchemaResolver.of({ results: this.inputs.results, schema: items, key, parentKey }).resolve(type).getSchemaType();
+    return _SchemaResolver.of({ results: this.inputs.results, schema: items, key, parentKey }).resolve(type).getSchemaType();
   };
   resolveProperties = (properties = {}, required = [], parentKey) => Object.entries(properties).reduce(
     (o, [key, value]) => ({
       ...o,
-      [`${key}${required.indexOf(key) > -1 ? "" : "?"}`]: SchemaResolver.of({
+      [`${key}${required.indexOf(key) > -1 ? "" : "?"}`]: _SchemaResolver.of({
         results: this.inputs.results,
         schema: value,
         key,
@@ -416,13 +416,13 @@ var generateHeader = (hasBody, contentTypes, operationId, header) => {
 var generateResponseType = (axiosHeaderConfig) => axiosHeaderConfig.includes('"Accept":') ? 'responseType: "blob",' : "";
 
 // src/resolvers/DefinitionsResolver.ts
-var DefinitionsResolver = class {
+var DefinitionsResolver = class _DefinitionsResolver {
   constructor(components) {
     this.components = components;
   }
   resolvedDefinitions = {};
   static of(components) {
-    return new DefinitionsResolver(components);
+    return new _DefinitionsResolver(components);
   }
   scanDefinitions = () => {
     const results = {};
@@ -456,8 +456,7 @@ var DefinitionsResolver = class {
         // enum is a top level data type, will not have children, parentKey should be empty
         parentKey: schema.enum ? "" : schemaName
       }).resolve().getSchemaType();
-      if (!schema.enum)
-        results[schemaName] = result;
+      if (!schema.enum) results[schemaName] = result;
       return result;
     });
     this.resolvedDefinitions = results;
@@ -484,7 +483,7 @@ var import_node_path = __toESM(require("path"), 1);
 
 // src/resolvers/PathResolver.ts
 var import_moderndash4 = require("moderndash");
-var PathResolver = class {
+var PathResolver = class _PathResolver {
   constructor(paths) {
     this.paths = paths;
   }
@@ -492,7 +491,7 @@ var PathResolver = class {
   extraDefinitions = {};
   contentType = {};
   static of(paths) {
-    return new PathResolver(paths);
+    return new _PathResolver(paths);
   }
   resolve = () => {
     this.resolvedPaths = Object.entries(this.paths).reduce(
@@ -538,8 +537,7 @@ var PathResolver = class {
     });
     const enums = Object.keys(this.extraDefinitions).map((k) => generateEnums(this.extraDefinitions, k));
     const requestParamsDefinition = requestBodiesAndParams.map(([interfaceName, request]) => {
-      if (!interfaceName)
-        return void 0;
+      if (!interfaceName) return void 0;
       Object.keys(request).forEach((key) => {
         if ((0, import_moderndash4.isEmpty)(request[key])) {
           delete request[key];
