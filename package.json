@@ -1,6 +1,6 @@
 {
   "name": "@miracleave-corp/swr-request-generator",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "type": "module",
   "description": "A tool for generating TypeScript code and interface from swagger by using SWR and axios as client.",
   "bin": {
